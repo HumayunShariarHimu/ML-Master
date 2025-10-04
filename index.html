@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML Master</title>
+<style>
+  /* Reset & Base */
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background:#0b0c1c; color:#eee; transition:0.3s; }
+
+  /* Header */
+  header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;
+    padding:15px 20px;
+    background: linear-gradient(90deg,#0f2027,#203a43,#2c5364);
+    box-shadow:0 4px 8px rgba(0,0,0,0.4);
+    border-bottom:1px solid #1a1a2e;
+  }
+  header h1 { font-size:1.6rem; font-weight:bold; }
+  header input { padding:6px 10px; border-radius:8px; border:none; width:220px; background:#1a1a2e; color:#fff; }
+
+  .menu-btn, .dark-btn { font-size:22px; cursor:pointer; background:none; border:none; color:white; margin-left:10px; }
+
+  /* Container */
+  .container { display:flex; height:calc(100vh - 70px); transition:0.3s; }
+
+  /* Sidebar */
+  nav {
+    width:280px;
+    background:#1a1a2e;
+    padding:20px;
+    overflow-y:auto;
+    border-right:2px solid #23395d;
+    box-shadow:2px 0 10px rgba(0,0,0,0.5);
+    transition:0.3s;
+  }
+  nav ul { list-style:none; }
+  nav li { margin:12px 0; }
+  nav a {
+    text-decoration:none;
+    color:#cfd8dc;
+    display:block;
+    padding:8px 12px;
+    border-radius:8px;
+    transition:0.2s;
+    background: linear-gradient(120deg,#0f2027,#203a43);
+  }
+  nav a:hover { background: linear-gradient(120deg,#3498db,#1abc9c); color:white; }
+
+  /* Main */
+  main {
+    flex:1; padding:25px; overflow-y:auto;
+  }
+  main h2 { border-bottom:1px solid #3498db; padding-bottom:6px; margin-bottom:15px; }
+
+  /* Code & Markdown */
+  pre, code {
+    background:#23395d;
+    color:#cfd8dc;
+    padding:8px 12px;
+    border-radius:8px;
+    overflow-x:auto;
+    display:block;
+    margin-bottom:15px;
+  }
+
+  /* Mobile */
+  @media(max-width:768px){
+    header input { width:100%; margin-top:10px; }
+    .container { flex-direction:column; }
+    nav { position:absolute; top:70px; left:0; height:calc(100vh - 70px); transform:translateX(-100%); z-index:1000; }
+    nav.open { transform:translateX(0); }
+    main { flex:none; height:auto; }
+    .menu-btn { display:block; }
+  }
+
+  /* Light Mode */
+  body.light { background:#f4f4f9; color:#222; }
+  body.light nav { background:#e0e7ff; }
+  body.light nav a { color:#222; background: linear-gradient(120deg,#dbeafe,#bfdbfe); }
+  body.light nav a:hover { background: linear-gradient(120deg,#3b82f6,#06b6d4); color:white; }
+  body.light header { background: linear-gradient(90deg,#4a5568,#718096); color:white; }
+  body.light input { background:#fff; color:#222; }
+  body.light pre, body.light code { background:#e3e3e3; color:#222; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ML Master</h1>
+  <div>
+    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+    <button class="dark-btn" onclick="toggleDark()">🌓</button>
+    <div id="google_translate_element" style="display:inline-block;"></div>
+  </div>
+  <input type="text" id="searchBox" placeholder="Search topics...">
+</header>
+
+<div class="container">
+  <nav id="sidebar"></nav>
+  <main id="content"><h2>Loading...</h2></main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+const BASE_API = "https://api.github.com/repos/stas00/ml-engineering/contents/";
+const FILES = {
+  "Home":"README.md",
+  "Compute":"compute/README.md",
+  "Storage":"storage/README.md",
+  "Network":"network/README.md",
+  "Training":"training/README.md",
+  "Inference":"inference/README.md",
+  "Monitoring":"monitoring/README.md",
+  "Lifecycle":"lifecycle/README.md",
+  "Security":"security/README.md",
+  "DevOps":"devops/README.md"
+};
+
+const sidebar = document.getElementById("sidebar");
+const content = document.getElementById("content");
+const searchBox = document.getElementById("searchBox");
+
+function buildNav(files){
+  const ul = document.createElement("ul");
+  for(const key in files){
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.textContent = key;
+    a.href="#";
+    a.onclick = e=>{ e.preventDefault(); loadFile(files[key]); sidebar.classList.remove("open"); };
+    li.appendChild(a); ul.appendChild(li);
+  }
+  return ul;
+}
+sidebar.appendChild(buildNav(FILES));
+
+async function loadFile(path){
+  content.innerHTML = "<p>Loading...</p>";
+  try{
+    const res = await fetch(BASE_API + path);
+    if(!res.ok) throw new Error("404 Not Found");
+    const data = await res.json();
+    const text = atob(data.content.replace(/\n/g,''));
+    content.innerHTML = marked.parse(text);
+  }catch(e){
+    content.innerHTML = `<p style="color:red;">❌ Error loading file: ${path}</p>`;
+  }
+}
+
+searchBox.addEventListener("keyup",function(){
+  const filter = this.value.toLowerCase();
+  sidebar.querySelectorAll("a").forEach(link=>{
+    const text = link.textContent.toLowerCase();
+    link.style.display = text.includes(filter)?"block":"none";
+  });
+});
+
+function toggleMenu(){ sidebar.classList.toggle("open"); }
+function toggleDark(){ document.body.classList.toggle("light"); }
+
+loadFile(FILES["Home"]);
+</script>
+
+<!-- Google Translate -->
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+  }, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
